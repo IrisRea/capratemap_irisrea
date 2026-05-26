@@ -1,37 +1,84 @@
-<!doctype html>
-<html lang="ja">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>REIT保有物件マップ α1</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-<style>
-:root{--bg:#f6f7f4;--panel:#ffffff;--ink:#263238;--muted:#63717a;--line:#d8ded8;--pin:#0b7285;--pin-selected:#d9480f;--cluster:#315f72;--accent:#2f6f4e;--shadow:0 14px 32px rgba(29,43,48,.14)}
-*{box-sizing:border-box}html,body{height:100%;margin:0}body{font-family:"Yu Gothic UI","Hiragino Sans","Meiryo",sans-serif;color:var(--ink);background:var(--bg);overflow:hidden}.app{height:100%;display:grid;grid-template-columns:380px minmax(0,1fr)}.map-wrap{position:relative;min-width:0;order:2}#map{height:100%;width:100%}.topbar{position:absolute;z-index:600;top:14px;left:64px;width:330px;display:flex;align-items:center;pointer-events:none}.search{pointer-events:auto;width:330px;display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.96);border:1px solid var(--line);box-shadow:var(--shadow);padding:8px;border-radius:8px}.search input{width:100%;height:36px;border:1px solid #c9d2cc;border-radius:6px;padding:0 11px;font-size:14px;color:var(--ink);background:#fff}.search button{height:36px;border:0;border-radius:6px;background:var(--accent);color:#fff;font-weight:700;padding:0 14px;cursor:pointer;white-space:nowrap}.search button:disabled{opacity:.65;cursor:wait}.sidebar{height:100%;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;min-width:0;order:1}.side-head{padding:18px 18px 14px;border-bottom:1px solid var(--line)}.side-head h1{font-size:19px;line-height:1.35;margin:0}.details{padding:18px;overflow:auto}.empty{height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);text-align:center;line-height:1.7;padding:20px}.property-title{margin:0 0 16px;font-size:22px;line-height:1.35}.kv{display:grid;grid-template-columns:132px minmax(0,1fr);gap:0;border-top:1px solid var(--line)}.kv dt,.kv dd{margin:0;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px;line-height:1.55}.kv dt{color:var(--muted);padding-right:12px}.kv dd{word-break:break-word}.actions{display:flex;gap:8px;margin-top:16px}.actions button{border:1px solid #cbd7d0;background:#fff;border-radius:6px;height:34px;padding:0 10px;cursor:pointer;color:var(--ink)}.point-marker{width:24px;height:24px;background:var(--pin);border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 5px 13px rgba(0,0,0,.28)}.point-marker:after{content:"";position:absolute;width:8px;height:8px;border-radius:50%;background:#fff;top:6px;left:6px}.point-marker.is-selected{width:28px;height:28px;background:var(--pin-selected)}.point-marker.is-selected:after{width:10px;height:10px;top:7px;left:7px}.cluster-marker{width:42px;height:42px;border-radius:50%;background:var(--cluster);border:3px solid rgba(255,255,255,.95);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;box-shadow:0 8px 18px rgba(0,0,0,.22)}.leaflet-tooltip.property-tip{background:#fff;color:var(--ink);border:1px solid var(--line);box-shadow:0 8px 20px rgba(0,0,0,.14);font-size:12px}.leaflet-control-attribution{font-size:11px}.search-results{position:absolute;z-index:650;top:64px;left:64px;width:330px;max-height:280px;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);display:none}.search-results button{display:block;width:100%;border:0;background:#fff;text-align:left;padding:10px 12px;cursor:pointer;border-bottom:1px solid #eef1ee;color:var(--ink)}.search-results button:hover{background:#eef6f1}.search-results .muted{color:var(--muted);font-size:12px;margin-top:2px}@media (max-width:980px){.app{grid-template-columns:1fr;grid-template-rows:330px minmax(0,1fr)}.sidebar{order:1;border-right:0;border-bottom:1px solid var(--line)}.map-wrap{order:2}.topbar{left:64px;width:min(330px,calc(100% - 78px))}.search{width:100%}.search-results{left:64px;width:min(330px,calc(100% - 78px))}.kv{grid-template-columns:112px minmax(0,1fr)}}
-</style>
-</head>
-<body>
-<div class="app">
-  <aside class="sidebar">
-    <div class="side-head"><h1>REIT保有物件マップ α1</h1></div>
-    <div class="details" id="details"><div class="empty">ピンをクリックすると<br>物件情報を表示します</div></div>
-  </aside>
-  <div class="map-wrap">
-    <div id="map"></div>
-    <div class="topbar">
-      <form class="search" id="searchForm">
-        <input id="addressInput" autocomplete="off" placeholder="住所または物件名で移動">
-        <button id="searchButton" type="submit">検索</button>
-      </form>
-    </div>
-    <div class="search-results" id="searchResults"></div>
-  </div>
-</div>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script src="./guarded-data/boot.js"></script>
+import fs from "node:fs/promises";
+import path from "node:path";
+
+const root = process.cwd();
+const inputPath = path.join(root, "index.html");
+const dataDir = path.join(root, "guarded-data");
+const summaryPath = path.join(dataDir, "boot.js");
+const chunkSize = 100;
+
+const source = await fs.readFile(inputPath, "utf8");
+const dataMatch = source.match(
+  /<script id="property-data" type="application\/json">([\s\S]*?)<\/script>/
+);
+
+if (!dataMatch) {
+  throw new Error("property-data script block was not found in index.html");
+}
+
+const properties = JSON.parse(dataMatch[1]);
+
+const summary = properties.map((item) => ({
+  i: item.id,
+  n: item.name,
+  x: item.lat,
+  y: item.lng,
+}));
+
+const detailEntries = properties.map((item) => [
+  item.id,
+  {
+    a: item.address,
+    r: item.reit,
+    p: item.appraisal,
+    c: item.capRate,
+    d: item.discountRate,
+    t: item.terminalCapRate,
+    u: item.use,
+    s: item.structure,
+    b: item.built,
+    m: item.rentableArea,
+    v: item.valuationDate,
+  },
+]);
+
+const chunkKeys = [];
+const chunks = [];
+for (let index = 0; index < detailEntries.length; index += chunkSize) {
+  const chunkKey = `p${String(index / chunkSize).padStart(2, "0")}`;
+  chunkKeys.push(chunkKey);
+  chunks.push({
+    key: chunkKey,
+    entries: detailEntries.slice(index, index + chunkSize),
+  });
+}
+
+const encodePayload = (value) =>
+  Buffer.from(JSON.stringify(value), "utf8").toString("base64");
+
+await fs.rm(dataDir, { recursive: true, force: true });
+await fs.mkdir(dataDir, { recursive: true });
+
+await fs.writeFile(
+  summaryPath,
+  `window.__PG_PAYLOADS=window.__PG_PAYLOADS||{};window.__PG_PAYLOADS.b="${encodePayload(summary)}";`,
+  "utf8"
+);
+
+for (const chunk of chunks) {
+  const chunkPath = path.join(dataDir, `${chunk.key}.js`);
+  const record = Object.fromEntries(chunk.entries);
+  await fs.writeFile(
+    chunkPath,
+    `window.__PG_PAYLOADS=window.__PG_PAYLOADS||{};window.__PG_PAYLOADS["${chunk.key}"]="${encodePayload(record)}";`,
+    "utf8"
+  );
+}
+
+const protectedScript = String.raw`<script src="./guarded-data/boot.js"></script>
 <script>
-const DETAIL_CHUNK_SIZE=100;
-const DETAIL_CHUNK_KEYS=["p00","p01","p02","p03","p04","p05","p06","p07","p08","p09","p10","p11","p12","p13","p14","p15","p16","p17","p18","p19","p20","p21","p22","p23","p24","p25","p26","p27","p28","p29","p30","p31","p32","p33","p34","p35","p36","p37","p38","p39","p40","p41","p42","p43","p44","p45","p46","p47","p48"];
+const DETAIL_CHUNK_SIZE=${chunkSize};
+const DETAIL_CHUNK_KEYS=${JSON.stringify(chunkKeys)};
 const decodePayload=(key)=>{const bag=window.__PG_PAYLOADS||{};const b64=bag[key];if(!b64)return null;const bin=atob(b64);const bytes=Uint8Array.from(bin,ch=>ch.charCodeAt(0));return JSON.parse(new TextDecoder().decode(bytes))};
 const prime=decodePayload('b')||[];
 const PROPERTIES=prime.map(item=>({id:item.i,name:item.n,lat:item.x,lng:item.y}));
@@ -169,6 +216,15 @@ document.getElementById('searchForm').addEventListener('submit',async event=>{
   }
 });
 document.addEventListener('click',event=>{if(!resultsEl.contains(event.target)&&!document.getElementById('searchForm').contains(event.target))resultsEl.style.display='none'});
-</script>
-</body>
-</html>
+</script>`;
+
+const protectedHtml = source.replace(
+  /<script id="property-data" type="application\/json">[\s\S]*?<\/script>\s*<script>[\s\S]*?<\/script>\s*<\/body>/,
+  `${protectedScript}\n</body>`
+);
+
+await fs.writeFile(inputPath, protectedHtml, "utf8");
+
+console.log(
+  `Updated ${path.basename(inputPath)} and rebuilt ${path.basename(dataDir)}/`
+);
